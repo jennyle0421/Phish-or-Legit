@@ -1,6 +1,7 @@
 {
   "name": "phish-or-legit",
   "version": "0.1.0",
+  "homepage": "https://jennyle0421.github.io/Phish-or-Legit",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.14.0",
