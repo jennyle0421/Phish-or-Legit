@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/Phish-or-Legit/static/css/main.81fa997f.css",
-    "main.js": "/Phish-or-Legit/static/js/main.dd5cfc49.js",
+    "main.js": "/Phish-or-Legit/static/js/main.119e4315.js",
     "index.html": "/Phish-or-Legit/index.html",
     "main.81fa997f.css.map": "/Phish-or-Legit/static/css/main.81fa997f.css.map",
-    "main.dd5cfc49.js.map": "/Phish-or-Legit/static/js/main.dd5cfc49.js.map"
+    "main.119e4315.js.map": "/Phish-or-Legit/static/js/main.119e4315.js.map"
   },
   "entrypoints": [
     "static/css/main.81fa997f.css",
-    "static/js/main.dd5cfc49.js"
+    "static/js/main.119e4315.js"
   ]
 }
