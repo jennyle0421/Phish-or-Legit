@@ -1,10 +1,11 @@
 import React from "react";
-import ReactDOM from "react-dom/client"; // Use React 18's createRoot
+import ReactDOM from "react-dom/client";
+import { HashRouter as Router } from "react-router-dom"; // Use HashRouter
 import App from "./App";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <React.StrictMode>
+  <Router>
     <App />
-  </React.StrictMode>
+  </Router>
 );
