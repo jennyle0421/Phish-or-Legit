@@ -9,9 +9,263 @@ import {
   Box,
   TextField,
   Stack,
+  Modal,
 } from "@mui/material";
 import Confetti from "react-confetti";
 import "./App.css";
+
+const LeaderboardModal = ({ open, onClose, leaderboard }) => (
+  <Modal open={open} onClose={onClose}>
+    <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 320, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 24, p: 4 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">🏆 Leaderboard</Typography>
+        <Button
+          onClick={onClose}
+          size="small"
+          variant="text"
+          sx={{ fontWeight: 'bold', textTransform: 'none', color: 'gray' }}
+        >
+          ✖ Close
+        </Button>
+      </Stack>
+      {leaderboard.length > 0 ? (
+        leaderboard.map((entry, index) => (
+          <Typography key={index}>{index + 1}. {entry.name} - {entry.score}</Typography>
+        ))
+      ) : (
+        <Typography>No scores yet!</Typography>
+      )}
+    </Box>
+  </Modal>
+);
+
+const TIMER_DURATION = 10;
+const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+const Quiz = () => {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [score, setScore] = useState(0);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [timer, setTimer] = useState(TIMER_DURATION);
+  const [confetti, setConfetti] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [playerName, setPlayerName] = useState("");
+  const [nameSubmitted, setNameSubmitted] = useState(false);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+
+  useEffect(() => {
+    if (gameStarted) startNewQuiz();
+  }, [gameStarted]);
+
+  useEffect(() => {
+    let countdown;
+    if (!showFeedback && timer > 0) {
+      countdown = setTimeout(() => setTimer(timer - 1), 1000);
+    } else if (timer === 0 && !showFeedback) {
+      handleAnswerClick(-1);
+    }
+    return () => clearTimeout(countdown);
+  }, [timer, showFeedback]);
+
+  const startNewQuiz = () => {
+    const questionCount = Math.floor(Math.random() * 6) + 10;
+    const shuffled = shuffleArray(allQuestions).slice(0, questionCount);
+    setQuestions(shuffled);
+    setCurrentQuestion(0);
+    setScore(0);
+    setSelectedOption(null);
+    setShowFeedback(false);
+    setTimer(TIMER_DURATION);
+    setQuizCompleted(false);
+    setNameSubmitted(false);
+  };
+
+  const handleAnswerClick = (index) => {
+    const currentQ = questions[currentQuestion];
+    if (!currentQ) return; // 🔒 Prevents crash if no question is loaded
+  
+    setSelectedOption(index);
+    setShowFeedback(true);
+  
+    if (index === currentQ.correctIndex) {
+      setScore(score + 1);
+      setConfetti(true);
+      setTimeout(() => setConfetti(false), 2000);
+    }
+  };
+  
+
+  const handleNextQuestion = () => {
+    setSelectedOption(null);
+    setShowFeedback(false);
+    setTimer(TIMER_DURATION);
+    if (currentQuestion + 1 < questions.length) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      setQuizCompleted(true);
+    }
+  };
+
+  const handleSubmitScore = () => {
+    if (playerName.trim() !== "") {
+      const newEntry = { name: playerName, score: score };
+      const updatedLeaderboard = [...leaderboard, newEntry].sort((a, b) => b.score - a.score).slice(0, 5);
+      setLeaderboard(updatedLeaderboard);
+      setNameSubmitted(true);
+    }
+  };
+
+  if (!gameStarted) {
+    return (
+      <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "100px" }}>
+        <Typography variant="h2" gutterBottom style={{ color: "#4caf50" }}>
+          🧠 Welcome to Phish or Legit! 🎣
+        </Typography>
+        <Typography variant="h6" style={{ marginBottom: 40 }}>
+          Learn to spot phishing attempts in a fun quiz format.
+        </Typography>
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button variant="contained" color="primary" size="large" onClick={() => setGameStarted(true)}>
+            Start Quiz
+          </Button>
+          <Button variant="outlined" color="secondary" size="large" onClick={() => setShowLeaderboardModal(true)}>
+            🏆 Leaderboard
+          </Button>
+        </Stack>
+        <LeaderboardModal open={showLeaderboardModal} onClose={() => setShowLeaderboardModal(false)} leaderboard={leaderboard} />
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "40px" }}>
+      {confetti && <Confetti />}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+        <Typography variant="h2" gutterBottom style={{ color: "#1976d2" }}>
+          🎣 Phish or Legit? 🧠
+        </Typography>
+        <Button
+          variant="text"
+          onClick={() => setShowLeaderboardModal(true)}
+          sx={{ fontSize: '.80rem', minWidth: 'auto' }}
+        >
+          🏆 Leaderboard
+        </Button>
+      </Stack>
+
+      <LeaderboardModal open={showLeaderboardModal} onClose={() => setShowLeaderboardModal(false)} leaderboard={leaderboard} />
+
+      {questions.length === 0 ? (
+        <Typography variant="h6">Loading questions...</Typography>
+      ) : quizCompleted ? (
+        <>
+          <Typography variant="h5" style={{ marginTop: 20 }}>
+            🎉 Great job! You scored {score} out of {questions.length}!
+          </Typography>
+
+          {!nameSubmitted && (
+            <>
+              <TextField
+                label="Enter your name"
+                variant="outlined"
+                fullWidth
+                margin="normal"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+              />
+              <Button variant="contained" color="primary" onClick={handleSubmitScore}>
+                Submit Score
+              </Button>
+            </>
+          )}
+
+          <Stack justifyContent="center" style={{ marginTop: 30 }}>
+            <Button variant="contained" color="secondary" onClick={startNewQuiz}>
+              🔁 Play Again
+            </Button>
+          </Stack>
+
+          <Card style={{ marginTop: 20 }}>
+            <CardContent>
+              <Typography variant="h6">🏆 Leaderboard</Typography>
+              {leaderboard.map((entry, index) => (
+                <Typography key={index}>{index + 1}. {entry.name} - {entry.score}</Typography>
+              ))}
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <>
+          <Typography variant="h6" gutterBottom>
+            Question {currentQuestion + 1} of {questions.length}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={(timer / TIMER_DURATION) * 100}
+            style={{ height: 10, marginBottom: 20 }}
+          />
+          <Card variant="outlined" style={{ padding: 20, marginBottom: 20, backgroundColor: '#fefefe' }}>
+            <CardContent>
+              <Typography variant="h5" style={{ marginBottom: 15 }}>
+                {questions[currentQuestion].question}
+              </Typography>
+              <Box>
+                {questions[currentQuestion].options.map((option, index) => (
+                  <Button
+                    key={index}
+                    variant="contained"
+                    fullWidth
+                    style={{
+                      marginBottom: 10,
+                      backgroundColor:
+                        showFeedback && index === questions[currentQuestion].correctIndex
+                          ? "#4caf50"
+                          : showFeedback && index === selectedOption && index !== questions[currentQuestion].correctIndex
+                          ? "#f44336"
+                          : undefined
+                    }}
+                    onClick={() => handleAnswerClick(index)}
+                    disabled={showFeedback}
+                  >
+                    {option}
+                  </Button>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+          {showFeedback && (
+            <Card variant="outlined" style={{ backgroundColor: "#fffde7", padding: 20 }}>
+              <CardContent>
+                <Typography variant="h6">
+                  {selectedOption === questions[currentQuestion].correctIndex
+                    ? "✅ Correct!"
+                    : selectedOption === -1
+                    ? "⏰ Time's up!"
+                    : "❌ Incorrect!"}
+                </Typography>
+                <Typography variant="body1" style={{ marginTop: 10 }}>
+                  {selectedOption >= 0
+                    ? questions[currentQuestion].explanations[selectedOption]
+                    : "You ran out of time!"}
+                </Typography>
+                <Button variant="contained" color="secondary" style={{ marginTop: 15 }} onClick={handleNextQuestion}>
+                  Next Question
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+          <Typography variant="subtitle1" style={{ marginTop: 20 }}>
+            Score: {score} / {questions.length}
+          </Typography>
+        </>
+      )}
+    </Container>
+  );
+};
 
 const allQuestions = [
   {
@@ -255,195 +509,5 @@ const allQuestions = [
     ]
   }
 ];
-
-const TIMER_DURATION = 10;
-const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
-
-const Quiz = () => {
-  const [questions, setQuestions] = useState([]);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [score, setScore] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [timer, setTimer] = useState(TIMER_DURATION);
-  const [confetti, setConfetti] = useState(false);
-  const [quizCompleted, setQuizCompleted] = useState(false);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [playerName, setPlayerName] = useState("");
-  const [nameSubmitted, setNameSubmitted] = useState(false);
-
-  useEffect(() => {
-    startNewQuiz();
-  }, []);
-
-  useEffect(() => {
-    let countdown;
-    if (!showFeedback && timer > 0) {
-      countdown = setTimeout(() => setTimer(timer - 1), 1000);
-    } else if (timer === 0 && !showFeedback) {
-      handleAnswerClick(-1);
-    }
-    return () => clearTimeout(countdown);
-  }, [timer, showFeedback]);
-
-  const startNewQuiz = () => {
-    const questionCount = Math.floor(Math.random() * 6) + 10;
-    const shuffled = shuffleArray(allQuestions).slice(0, questionCount);
-    setQuestions(shuffled);
-    setCurrentQuestion(0);
-    setScore(0);
-    setSelectedOption(null);
-    setShowFeedback(false);
-    setTimer(TIMER_DURATION);
-    setQuizCompleted(false);
-    setNameSubmitted(false);
-  };
-
-  const handleAnswerClick = (index) => {
-    setSelectedOption(index);
-    setShowFeedback(true);
-
-    if (index === questions[currentQuestion].correctIndex) {
-      setScore(score + 1);
-      setConfetti(true);
-      setTimeout(() => setConfetti(false), 2000);
-    }
-  };
-
-  const handleNextQuestion = () => {
-    setSelectedOption(null);
-    setShowFeedback(false);
-    setTimer(TIMER_DURATION);
-    if (currentQuestion + 1 < questions.length) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
-      setQuizCompleted(true);
-    }
-  };
-
-  const handleSubmitScore = () => {
-    if (playerName.trim() !== "") {
-      const newEntry = { name: playerName, score: score };
-      const updatedLeaderboard = [...leaderboard, newEntry].sort((a, b) => b.score - a.score).slice(0, 5);
-      setLeaderboard(updatedLeaderboard);
-      setNameSubmitted(true);
-    }
-  };
-
-  return (
-    <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "40px" }}>
-      {confetti && <Confetti />}
-      <Typography variant="h3" gutterBottom style={{ color: "#1976d2" }}>
-        🎣 Phish or Legit? 🧠
-      </Typography>
-
-      {questions.length === 0 ? (
-        <Typography variant="h6">Loading questions...</Typography>
-      ) : quizCompleted ? (
-        <>
-          <Typography variant="h5" style={{ marginTop: 20 }}>
-            🎉 Great job! You scored {score} out of {questions.length}!
-          </Typography>
-
-          {!nameSubmitted && (
-            <>
-              <TextField
-                label="Enter your name"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSubmitScore}
-              >
-                Submit Score
-              </Button>
-            </>
-          )}
-
-          {leaderboard.length > 0 && (
-            <>
-              <Stack justifyContent="center" style={{ marginTop: 30 }}>
-                <Button variant="contained" color="secondary" onClick={startNewQuiz}>
-                  🔁 Play Again
-                </Button>
-              </Stack>
-              <Card style={{ marginTop: 20 }}>
-                <CardContent>
-                  <Typography variant="h6">🏆 Leaderboard</Typography>
-                  {leaderboard.map((entry, index) => (
-                    <Typography key={index}>{index + 1}. {entry.name} - {entry.score}</Typography>
-                  ))}
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </>
-      ) : (
-        <>
-          <Typography variant="h6" gutterBottom>
-            Question {currentQuestion + 1} of {questions.length}
-          </Typography>
-          <LinearProgress variant="determinate" value={(timer / TIMER_DURATION) * 100} style={{ height: 10, marginBottom: 20 }} />
-          <Card variant="outlined" style={{ padding: 20, marginBottom: 20, backgroundColor: '#fefefe' }}>
-            <CardContent>
-              <Typography variant="h5" style={{ marginBottom: 15 }}>{questions[currentQuestion].question}</Typography>
-              <Box>
-                {questions[currentQuestion].options.map((option, index) => (
-                  <Button
-                    key={index}
-                    variant="contained"
-                    fullWidth
-                    style={{
-                      marginBottom: 10,
-                      backgroundColor:
-                        showFeedback && index === questions[currentQuestion].correctIndex
-                          ? "#4caf50"
-                          : showFeedback && index === selectedOption && index !== questions[currentQuestion].correctIndex
-                          ? "#f44336"
-                          : undefined
-                    }}
-                    onClick={() => handleAnswerClick(index)}
-                    disabled={showFeedback}
-                  >
-                    {option}
-                  </Button>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-          {showFeedback && (
-            <Card variant="outlined" style={{ backgroundColor: "#fffde7", padding: 20 }}>
-              <CardContent>
-                <Typography variant="h6">
-                  {selectedOption === questions[currentQuestion].correctIndex
-                    ? "✅ Correct!"
-                    : selectedOption === -1
-                    ? "⏰ Time's up!"
-                    : "❌ Incorrect!"}
-                </Typography>
-                <Typography variant="body1" style={{ marginTop: 10 }}>
-                  {selectedOption >= 0
-                    ? questions[currentQuestion].explanations[selectedOption]
-                    : "You ran out of time!"}
-                </Typography>
-                <Button variant="contained" color="secondary" style={{ marginTop: 15 }} onClick={handleNextQuestion}>
-                  Next Question
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          <Typography variant="subtitle1" style={{ marginTop: 20 }}>
-            Score: {score} / {questions.length}
-          </Typography>
-        </>
-      )}
-    </Container>
-  );
-};
-
 export default Quiz;
+
