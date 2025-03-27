@@ -6,7 +6,9 @@ import {
   Card,
   CardContent,
   LinearProgress,
-  Box
+  Box,
+  TextField,
+  Stack,
 } from "@mui/material";
 import Confetti from "react-confetti";
 import "./App.css";
@@ -254,8 +256,7 @@ const allQuestions = [
   }
 ];
 
-const TIMER_DURATION = 10; // 10 seconds per question
-
+const TIMER_DURATION = 10;
 const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
 const Quiz = () => {
@@ -267,6 +268,9 @@ const Quiz = () => {
   const [timer, setTimer] = useState(TIMER_DURATION);
   const [confetti, setConfetti] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [playerName, setPlayerName] = useState("");
+  const [nameSubmitted, setNameSubmitted] = useState(false);
 
   useEffect(() => {
     startNewQuiz();
@@ -277,13 +281,13 @@ const Quiz = () => {
     if (!showFeedback && timer > 0) {
       countdown = setTimeout(() => setTimer(timer - 1), 1000);
     } else if (timer === 0 && !showFeedback) {
-      handleAnswerClick(-1); // Auto-miss if time runs out
+      handleAnswerClick(-1);
     }
     return () => clearTimeout(countdown);
   }, [timer, showFeedback]);
 
   const startNewQuiz = () => {
-    const questionCount = Math.floor(Math.random() * 6) + 10; // Random between 10 and 15
+    const questionCount = Math.floor(Math.random() * 6) + 10;
     const shuffled = shuffleArray(allQuestions).slice(0, questionCount);
     setQuestions(shuffled);
     setCurrentQuestion(0);
@@ -292,6 +296,7 @@ const Quiz = () => {
     setShowFeedback(false);
     setTimer(TIMER_DURATION);
     setQuizCompleted(false);
+    setNameSubmitted(false);
   };
 
   const handleAnswerClick = (index) => {
@@ -316,6 +321,15 @@ const Quiz = () => {
     }
   };
 
+  const handleSubmitScore = () => {
+    if (playerName.trim() !== "") {
+      const newEntry = { name: playerName, score: score };
+      const updatedLeaderboard = [...leaderboard, newEntry].sort((a, b) => b.score - a.score).slice(0, 5);
+      setLeaderboard(updatedLeaderboard);
+      setNameSubmitted(true);
+    }
+  };
+
   return (
     <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "40px" }}>
       {confetti && <Confetti />}
@@ -330,9 +344,44 @@ const Quiz = () => {
           <Typography variant="h5" style={{ marginTop: 20 }}>
             🎉 Great job! You scored {score} out of {questions.length}!
           </Typography>
-          <Button variant="contained" color="primary" style={{ marginTop: 20 }} onClick={startNewQuiz}>
-            🔁 Play Again
-          </Button>
+
+          {!nameSubmitted && (
+            <>
+              <TextField
+                label="Enter your name"
+                variant="outlined"
+                fullWidth
+                margin="normal"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmitScore}
+              >
+                Submit Score
+              </Button>
+            </>
+          )}
+
+          {leaderboard.length > 0 && (
+            <>
+              <Stack justifyContent="center" style={{ marginTop: 30 }}>
+                <Button variant="contained" color="secondary" onClick={startNewQuiz}>
+                  🔁 Play Again
+                </Button>
+              </Stack>
+              <Card style={{ marginTop: 20 }}>
+                <CardContent>
+                  <Typography variant="h6">🏆 Leaderboard</Typography>
+                  {leaderboard.map((entry, index) => (
+                    <Typography key={index}>{index + 1}. {entry.name} - {entry.score}</Typography>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </>
       ) : (
         <>
