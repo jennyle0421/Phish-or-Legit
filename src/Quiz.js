@@ -142,19 +142,34 @@ const Quiz = () => {
   }
 
   return (
-    <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "40px" }}>
+    <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "40px", background: "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)", padding: 20, borderRadius: 10 }}>
       {confetti && <Confetti />}
       <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap">
         <Typography variant="h2" gutterBottom style={{ color: "#1976d2" }}>
           🎣 Phish or Legit? 🧠
         </Typography>
-        <Button
-          variant="text"
-          onClick={() => setShowLeaderboardModal(true)}
-          sx={{ fontSize: '.80rem', minWidth: 'auto' }}
+        <Box
+          sx={{
+            border: '2px solid white',
+            borderRadius: '10px',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            padding: '4px 12px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+          }}
         >
-          🏆 Leaderboard
-        </Button>
+          <Button
+            variant="text"
+            onClick={() => setShowLeaderboardModal(true)}
+            sx={{
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              color: '#fff',
+              textShadow: '1px 1px 2px #000'
+            }}
+          >
+            🏆 LEADERBOARD
+          </Button>
+        </Box>
       </Stack>
 
       <LeaderboardModal open={showLeaderboardModal} onClose={() => setShowLeaderboardModal(false)} leaderboard={leaderboard} />
@@ -238,7 +253,18 @@ const Quiz = () => {
             </CardContent>
           </Card>
           {showFeedback && (
-            <Card variant="outlined" style={{ backgroundColor: "#fffde7", padding: 20 }}>
+            <Card
+              variant="outlined"
+              style={{
+                backgroundColor:
+                  selectedOption === questions[currentQuestion].correctIndex
+                    ? "#d0f8ce" // green for correct
+                    : selectedOption === -1
+                    ? "#ffe0e0" // pink for time's up
+                    : "#ffe082", // orange for incorrect
+                padding: 20
+              }}
+            >
               <CardContent>
                 <Typography variant="h6">
                   {selectedOption === questions[currentQuestion].correctIndex
