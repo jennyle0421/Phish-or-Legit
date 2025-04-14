@@ -39,7 +39,7 @@ const LeaderboardModal = ({ open, onClose, leaderboard }) => (
   </Modal>
 );
 
-const TIMER_DURATION = 10;
+const TIMER_DURATION = 12;
 const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
 const Quiz = () => {
@@ -56,6 +56,10 @@ const Quiz = () => {
   const [nameSubmitted, setNameSubmitted] = useState(false);
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [theme, setTheme] = useState('light');
+  const [showThreeSecondAlert, setShowThreeSecondAlert] = useState(false);
+  const [showSevenSecondAlert, setShowSevenSecondAlert] = useState(false);
+  const [showThemeHint, setShowThemeHint] = useState(false);
 
   useEffect(() => {
     if (gameStarted) startNewQuiz();
@@ -64,6 +68,14 @@ const Quiz = () => {
   useEffect(() => {
     let countdown;
     if (!showFeedback && timer > 0) {
+      if (timer === 7) {
+        setShowSevenSecondAlert(true);
+        setTimeout(() => setShowSevenSecondAlert(false), 1000);
+      }
+      if (timer === 3) {
+        setShowThreeSecondAlert(true);
+        setTimeout(() => setShowThreeSecondAlert(false), 1000);
+      }
       countdown = setTimeout(() => setTimer(timer - 1), 1000);
     } else if (timer === 0 && !showFeedback) {
       handleAnswerClick(-1);
@@ -142,34 +154,64 @@ const Quiz = () => {
   }
 
   return (
-    <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "40px", background: "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)", padding: 20, borderRadius: 10 }}>
+    <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "40px", background: theme === 'light' ? "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)" : "linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)", padding: 20, borderRadius: 10 }}>
       {confetti && <Confetti />}
+      {showSevenSecondAlert && (
+      <Box sx={{
+        position: 'fixed',
+        top: '20%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: '#ffeb3b',
+        color: 'black',
+        padding: '10px 20px',
+        borderRadius: '8px',
+        fontWeight: 'bold',
+        fontSize: '1.2rem',
+        zIndex: 9999,
+        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
+      }}>
+        ⚠️ 7 seconds left!
+      </Box>
+    )}
+      {showThreeSecondAlert && (
+      <Box sx={{
+        position: 'fixed',
+        top: '20%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: '#f44336',
+        color: 'white',
+        padding: '10px 20px',
+        borderRadius: '8px',
+        fontWeight: 'bold',
+        fontSize: '1.2rem',
+        zIndex: 9999,
+        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
+      }}>
+        ⏳ 3 seconds left!
+      </Box>
+    )}
       <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap">
-        <Typography variant="h2" gutterBottom style={{ color: "#1976d2" }}>
+        <Typography variant="h2" gutterBottom style={{ color: theme === 'light' ? "#1976d2" : "#ffffff" }}>
           🎣 Phish or Legit? 🧠
         </Typography>
-        <Box
-          sx={{
-            border: '2px solid white',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            padding: '4px 12px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-          }}
-        >
+        <Stack direction="row" spacing={1}>
           <Button
             variant="text"
             onClick={() => setShowLeaderboardModal(true)}
-            sx={{
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              color: '#fff',
-              textShadow: '1px 1px 2px #000'
-            }}
+            sx={{ fontSize: '.80rem', minWidth: 'auto', color: theme === 'light' ? '#000' : '#fff' }}
           >
-            🏆 LEADERBOARD
+            🏆 Leaderboard
           </Button>
-        </Box>
+          <Button
+            variant="text"
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            sx={{ fontSize: '.80rem', minWidth: 'auto', color: theme === 'light' ? '#000' : '#fff' }}
+          >
+            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+          </Button>
+        </Stack>
       </Stack>
 
       <LeaderboardModal open={showLeaderboardModal} onClose={() => setShowLeaderboardModal(false)} leaderboard={leaderboard} />
@@ -221,7 +263,16 @@ const Quiz = () => {
           <LinearProgress
             variant="determinate"
             value={(timer / TIMER_DURATION) * 100}
-            style={{ height: 10, marginBottom: 20 }}
+            style={{
+              height: 10,
+              marginBottom: 20,
+              backgroundColor:
+                timer <= 3
+                  ? '#ffcccc' // red
+                  : timer <= 7
+                  ? '#fff59d' // yellow
+                  : undefined
+            }}            
           />
           <Card variant="outlined" style={{ padding: 20, marginBottom: 20, backgroundColor: '#fefefe' }}>
             <CardContent>
@@ -253,18 +304,7 @@ const Quiz = () => {
             </CardContent>
           </Card>
           {showFeedback && (
-            <Card
-              variant="outlined"
-              style={{
-                backgroundColor:
-                  selectedOption === questions[currentQuestion].correctIndex
-                    ? "#d0f8ce" // green for correct
-                    : selectedOption === -1
-                    ? "#ffe0e0" // pink for time's up
-                    : "#ffe082", // orange for incorrect
-                padding: 20
-              }}
-            >
+            <Card variant="outlined" style={{ backgroundColor: selectedOption === questions[currentQuestion].correctIndex ? "#d0f8ce" : selectedOption === -1 ? "#ffe0e0" : "#ffe082", padding: 20 }}>
               <CardContent>
                 <Typography variant="h6">
                   {selectedOption === questions[currentQuestion].correctIndex
