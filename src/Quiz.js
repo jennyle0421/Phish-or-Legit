@@ -67,7 +67,7 @@ const Quiz = () => {
 
   useEffect(() => {
     let countdown;
-    if (!showFeedback && timer > 0) {
+    if (!showFeedback && timer > 0 && !quizCompleted) {
       if (timer === 7) {
         setShowSevenSecondAlert(true);
         setTimeout(() => setShowSevenSecondAlert(false), 1000);
@@ -77,11 +77,11 @@ const Quiz = () => {
         setTimeout(() => setShowThreeSecondAlert(false), 1000);
       }
       countdown = setTimeout(() => setTimer(timer - 1), 1000);
-    } else if (timer === 0 && !showFeedback) {
+    } else if (timer === 0 && !showFeedback && !quizCompleted) {
       handleAnswerClick(-1);
     }
     return () => clearTimeout(countdown);
-  }, [timer, showFeedback]);
+  }, [timer, showFeedback, quizCompleted]);  
 
   const startNewQuiz = () => {
     const questionCount = Math.floor(Math.random() * 6) + 10;
